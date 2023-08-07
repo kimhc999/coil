@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,8 +42,12 @@ import androidx.compose.ui.unit.DpSize
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.rememberAsyncImagePainter
+import coil.imageLoader
 import coil.memory.MemoryCache
 import coil.request.ImageRequest
+import coil.size.Size
 import sample.common.AssetType
 import sample.common.Image
 import sample.common.MainViewModel
@@ -188,20 +193,54 @@ private fun ListScreen(
             // Intentionally not a state object to avoid recomposition.
             var placeholder: MemoryCache.Key? = null
 
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(image.uri)
-                    .parameters(image.parameters)
-                    .build(),
-                placeholder = ColorPainter(Color(image.color)),
-                error = ColorPainter(Color.Red),
-                onSuccess = { placeholder = it.result.memoryCacheKey },
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
+            TestImage(
                 modifier = Modifier
                     .size(size)
-                    .clickable { onImageClick(image, placeholder) }
+                    .clickable { onImageClick(image, placeholder) },
+                url = image.uri
             )
+
+//            AsyncImage(
+//                model = ImageRequest.Builder(LocalContext.current)
+//                    .data(image.uri)
+//                    .parameters(image.parameters)
+//                    .build(),
+//                placeholder = ColorPainter(Color(image.color)),
+//                error = ColorPainter(Color.Red),
+//                onSuccess = { placeholder = it.result.memoryCacheKey },
+//                contentDescription = null,
+//                contentScale = ContentScale.Crop,
+//                modifier = Modifier
+//                    .size(size)
+//                    .clickable { onImageClick(image, placeholder) }
+//            )
+        }
+    }
+}
+
+@Composable
+private fun TestImage(
+    modifier: Modifier = Modifier,
+    url: String
+) {
+    val painter = rememberAsyncImagePainter(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(url)
+            .size(Size.ORIGINAL)
+            .build(),
+        imageLoader = LocalContext.current.imageLoader,
+    )
+
+    when (painter.state) {
+        is AsyncImagePainter.State.Success -> {
+            Image(
+                modifier = modifier,
+                painter = painter,
+                contentDescription = null
+            )
+        }
+        else -> {
+            Text(text = "Now Loading...")
         }
     }
 }
